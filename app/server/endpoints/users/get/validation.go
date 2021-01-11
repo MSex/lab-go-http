@@ -4,8 +4,8 @@ import (
 	"io"
 
 	"github.com/MSex/lab-go-http/app/server/util"
-	validation "github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 )

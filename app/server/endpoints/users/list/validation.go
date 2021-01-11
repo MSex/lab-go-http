@@ -4,7 +4,7 @@ import (
 	"io"
 	"net/url"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 )
@@ -26,6 +26,8 @@ func parseValidateQuery(rawQuery string, req *ParsedRequest) validation.Errors {
 	}
 
 	err := validation.Errors{
+		//TODO validate not extra parms
+		"Query String": validation.Validate(queryValues, validation.Length(0,1)),
 		"StartDate": validation.Validate(
 			queryValues["startdate"],
 			validation.Length(1, 1),

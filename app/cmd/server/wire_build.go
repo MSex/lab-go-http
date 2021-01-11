@@ -5,7 +5,7 @@ package main
 
 import (
 	"github.com/MSex/lab-go-http/app/config"
-	"github.com/MSex/lab-go-http/app/data/nodb"
+	"github.com/MSex/lab-go-http/app/data/sqlite"
 	"github.com/MSex/lab-go-http/app/logger"
 	"github.com/MSex/lab-go-http/app/server"
 	"github.com/google/wire"
@@ -25,7 +25,7 @@ func inject() (*httprouter.Router, error) {
 	wire.Build(
 		logger.ProviderSet,
 		config.ProviderSet,
-		nodb.ProviderSet,
+		sqlite.ProviderSet,
 		server.ProviderSet,
 	)
 	return nil, nil

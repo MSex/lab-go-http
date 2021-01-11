@@ -6,7 +6,7 @@ import (
 
 	"encoding/json"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"github.com/MSex/lab-go-http/app/data"
 	"github.com/julienschmidt/httprouter"
@@ -101,7 +101,7 @@ func (handler *Handler) Handle(w http.ResponseWriter, r *http.Request, p httprou
 		return
 	}
 
-	user, err := handler.users.Get(userId)
+	user, err := handler.users.Read(userId)
 	if err == data.NotFoundError {
 		err := errors.Wrap(err, "User not found")
 		handler.logger.Info(err.Error())

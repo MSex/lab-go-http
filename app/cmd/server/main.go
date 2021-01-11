@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 func main() {
@@ -19,7 +21,8 @@ func main() {
 
 	router, err := inject()
 	if err != nil {
-		zlogger.DPanic("Error initializing")
+		err = errors.Wrap(err, "Error initializing")
+		zlogger.DPanic(err.Error())
 	}
 
 	log.Fatal(http.ListenAndServe(":8080", router))

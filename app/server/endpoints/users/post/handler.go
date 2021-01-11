@@ -1,27 +1,23 @@
 package postusers
 
 import (
-	"encoding/json"
-	"io"
 	"net/http"
 
-	validation "github.com/go-ozzo/ozzo-validation"
-
 	"github.com/MSex/lab-go-http/app/data"
+	"github.com/MSex/lab-go-http/app/logger"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
 type Handler struct {
-	logger *zap.Logger
+	logger logger.Logger
 
-	parseValidatePath    func(pathParams httprouter.Params, parsed *ParsedRequest) validation.Errors
-	parseValidateQuery   func(rawQuery string, parsed *ParsedRequest) validation.Errors
-	parseValidateBody    func(body io.ReadCloser, parse *ParsedRequest) validation.Errors
+	requestHelper RequestHelper
+	responseHelper ResponseHelper
+
 	validatePrecondition func(handler *Handler, user *data.User) (error, int)
 	users                data.Users
-	buildUser            func(*User) (*data.User, error)
 }
 
 func ProvideHandler(
@@ -29,82 +25,46 @@ func ProvideHandler(
 	logger *zap.Logger,
 ) (*Handler, error) {
 	handler := &Handler{
-		logger:               logger,
-		parseValidatePath:    parseValidatePath,
-		parseValidateQuery:   parseValidateQuery,
-		parseValidateBody:    parseValidateBody,
+		logger: logger,
+
+		requestHelper: &RequestHelperImpl{},
+		responseHelper: &ResponseHelperImpl{},
+
 		users:                users,
 		validatePrecondition: validatePrecondition,
-		buildUser:            buildUser,
 	}
 
 	return handler, nil
 }
 
 func (handler *Handler) Handle(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	// TODO ctx := r.Context()
-
 	//TODO auth
 
-	//TODO authorize owner
-
-	//TODO validate context?
-
-	parsed := ParsedRequest{}
-
-	if err := handler.parseValidatePath(p, &parsed).Filter(); err != nil {
-		err := errors.Wrap(err, "Invalid request path")
-		handler.logger.Warn(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		_, err = w.Write([]byte(err.Error()))
-		if err != nil {
-			err := errors.Wrap(err, "Error writing response")
-			handler.logger.Error(err.Error())
-		}
-		return
-	}
-
-	if err := handler.parseValidateQuery(r.URL.RawQuery, &parsed).Filter(); err != nil {
-		err := errors.Wrap(err, "Invalid request query")
-		handler.logger.Warn(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		_, err = w.Write([]byte(err.Error()))
-		if err != nil {
-			err := errors.Wrap(err, "Error writing response")
-			handler.logger.Error(err.Error())
-		}
-		return
-	}
-
-	if err := handler.parseValidateBody(r.Body, &parsed).Filter(); err != nil {
-		err := errors.Wrap(err, "Invalid request body")
-		handler.logger.Warn(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		_, err = w.Write([]byte(err.Error()))
-		if err != nil {
-			err := errors.Wrap(err, "Error writing response")
-			handler.logger.Error(err.Error())
-		}
-		return
-	}
-
-	user, err := handler.buildUser(&parsed.User)
+	requestData, err := handler.requestHelper.ParseRequest(p, r.URL.RawQuery, r.Body)
 	if err != nil {
-		err := errors.Wrap(err, "Error building user")
-		handler.logger.Error(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		err := errors.Wrap(err, "Error parsing request")
+		handler.logger.Warn(err.Error())
+		handler.responseHelper.WriteError(http.StatusBadRequest, err, w, handler.logger)
 		return
+	}
+
+	if err := handler.requestHelper.ValidateRequest(requestData).Filter(); err != nil {
+		err := errors.Wrap(err, "Invalid request")
+		handler.logger.Warn(err.Error())
+		handler.responseHelper.WriteError(http.StatusBadRequest, err, w, handler.logger)
+		return
+	}
+
+	user := &data.User{
+		Name:  requestData.Body.User.Name, 
+		Login: requestData.Body.User.Login,
+		Birth: requestData.Body.User.Birth,
 	}
 
 	err, code := handler.validatePrecondition(handler, user)
 	if err != nil {
 		handler.logger.Error(err.Error())
-		w.WriteHeader(code)
-		_, err = w.Write([]byte(err.Error()))
-		if err != nil {
-			err := errors.Wrap(err, "Error writing response")
-			handler.logger.Error(err.Error())
-		}
+		handler.responseHelper.WriteError(code, err, w, handler.logger)
 		return
 	}
 
@@ -112,38 +72,17 @@ func (handler *Handler) Handle(w http.ResponseWriter, r *http.Request, p httprou
 	if err != nil {
 		err = errors.Wrap(err, "Error presisting data")
 		handler.logger.Error(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return 
+		handler.responseHelper.WriteError(http.StatusInternalServerError, err, w, handler.logger)
+		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-
-	msg := &ResponseBody{
+	msg := ResponseBody{
 		Id: id.String(),
 	}
 
-	asJSON, err := json.Marshal(msg)
-	if err != nil {
-		err := errors.Wrap(err, "Error marshaling response")
-		handler.logger.Error(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	handler.responseHelper.WriteBody(msg,  w, handler.logger)
 
-	_, err = w.Write(asJSON)
-	if err != nil {
-		err := errors.Wrap(err, "Error writing response")
-		handler.logger.Error(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 
-	_, err = w.Write([]byte("\n"))
-	if err != nil {
-		err := errors.Wrap(err, "Error writing response")
-		handler.logger.Error(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 
 }
+

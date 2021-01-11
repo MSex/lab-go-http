@@ -2,27 +2,29 @@ package sqlite
 
 import (
 	"database/sql"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
 	CreateTableUsers = `
 		CREATE TABLE users (
-    		id varchar(3) NOT NULL PRIMARY KEY,
+    		id INTEGER PRIMARY KEY,
     		login varchar(32) NOT NULL UNIQUE,
-    		name varchar(32) NOT NULL UNIQUE,
-    		birth varchar(32) NOT NULL UNIQUE
+    		name varchar(32) NOT NULL,
+    		birth varchar(32) NOT NULL
 		);
 	`
 
 	Insert = `
-		INSERT INTO users (login, name, birth) VALUES ("renato@example.com", "Renato", "1980-11-28");
-		INSERT INTO users (login, name, birth) VALUES ("guto@example.com", "Guto", "1979-12-06");
-		INSERT INTO users (login, name, birth) VALUES ("mauricio@example.com", "Mauricio", "1977-05-24");
+		INSERT INTO users (id, login, name, birth) VALUES (1, "renato@example.com", "Renato", "1980-11-28");
+		INSERT INTO users (id, login, name, birth) VALUES (2, "guto@example.com", "Guto", "1979-12-06");
+		INSERT INTO users (id, login, name, birth) VALUES (3, "mauricio@example.com", "Mauricio", "1977-05-24");
 	`
 
 )
 
-func Open(
+func ProvideConn(
 ) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {

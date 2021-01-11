@@ -23,7 +23,7 @@ return false, nil
 }
 
 
-func (stub *Users) Get(id data.UserId) (*data.User, error) {
+func (stub *Users) Read(id data.UserId) (*data.User, error) {
 	if stub.OnGet != nil {
 		return stub.OnGet(id)
 	}

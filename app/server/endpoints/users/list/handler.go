@@ -6,9 +6,8 @@ import (
 
 	"encoding/json"
 
-	validation "github.com/go-ozzo/ozzo-validation"
-
 	"github.com/MSex/lab-go-http/app/data"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"

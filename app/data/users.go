@@ -11,7 +11,7 @@ type User struct {
 	Id   UserId
 	Name string
 	Login string
-	Birth string 
+	Birth string
 }
 
 type UserCursor interface {
@@ -20,11 +20,10 @@ type UserCursor interface {
 }
 
 type Users interface {
-	Get(id UserId) (*User, error)
-	LoadCursor() (UserCursor, error)
 	Create(user *User) (UserId, error)
+	Read(id UserId) (*User, error)
+	LoadCursor() (UserCursor, error)
 	ExistsLogin(login string) (bool, error)
-
 }
 
 func UserIdFromString(id string) (UserId, error) {

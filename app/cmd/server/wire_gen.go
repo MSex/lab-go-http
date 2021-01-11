@@ -7,7 +7,7 @@ package main
 
 import (
 	"github.com/MSex/lab-go-http/app/config"
-	"github.com/MSex/lab-go-http/app/data/nodb"
+	"github.com/MSex/lab-go-http/app/data/sqlite"
 	"github.com/MSex/lab-go-http/app/logger"
 	"github.com/MSex/lab-go-http/app/server"
 	"github.com/MSex/lab-go-http/app/server/endpoints/users/get"
@@ -36,7 +36,11 @@ func injectLogger() (*zap.Logger, error) {
 }
 
 func inject() (*httprouter.Router, error) {
-	users := nodb.ProvideUsers()
+	db, err := sqlite.ProvideConn()
+	if err != nil {
+		return nil, err
+	}
+	users := sqlite.ProvideUsers(db)
 	developmentLogging := config.ProvideDevLogging()
 	level := config.ProvideLogLevel()
 	appName := config.ProvideAppName()
