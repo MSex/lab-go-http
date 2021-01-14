@@ -58,7 +58,7 @@ $(BUILD_TARGETS): build-%: %
 clean: ## Remove binaries
 	rm -fr $(BIN_DIR)/*
 
-refresh: wire tidy test build clean ## Make wire tidy test build and clean at once
+refresh: wire tidy test build  ## Make wire tidy test build and at once
 
 run: run-$(MAIN_TARGET) ## Run a local version
 
